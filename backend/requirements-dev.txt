@@ -1,3 +1,3 @@
-pytest
-pytest-django
-python-dotenv
+# Testing
+pytest>=7.4
+pytest-django>=4.7
