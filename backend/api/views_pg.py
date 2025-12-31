@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from services.booking_service import create_booking
+from heritage_backend.services.booking_service import create_booking
 from datetime import date
 
 def create_booking_view(request):
