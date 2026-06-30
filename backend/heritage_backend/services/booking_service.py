@@ -1,5 +1,5 @@
 from django.db import transaction, IntegrityError
-from core.models import Booking, Visitor, HeritageSite
+from heritage_backend.core.models import Booking, Visitor, HeritageSite
 
 @transaction.atomic
 def create_booking(

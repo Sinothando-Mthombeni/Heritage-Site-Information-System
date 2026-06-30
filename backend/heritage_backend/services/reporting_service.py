@@ -1,6 +1,6 @@
 from django.db.models import Count, Avg
 from django.db import connection
-from core.models import HeritageSite, Booking
+from heritage_backend.core.models import HeritageSite, Booking
 
 def list_active_sites():
     return HeritageSite.objects.filter(is_active=True)

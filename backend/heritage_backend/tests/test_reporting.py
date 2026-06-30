@@ -1,5 +1,5 @@
 import pytest
-from services.reporting_service import bookings_per_site
+from heritage_backend.services.reporting_service import bookings_per_site
 
 @pytest.mark.django_db
 def test_bookings_per_site_returns_data():

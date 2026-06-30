@@ -31,6 +31,7 @@ class HeritageSite(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
     entry_fee = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+    is_active = models.BooleanField(default=True)
 
     province = models.ForeignKey(
         Province,

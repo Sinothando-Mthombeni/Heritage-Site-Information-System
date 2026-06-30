@@ -1,14 +1,14 @@
 import pytest
 from datetime import date
-from services.booking_service import create_booking
-from core.models import Booking
+from heritage_backend.services.booking_service import create_booking
+from heritage_backend.core.models import Booking
 
 @pytest.mark.django_db
-def test_successful_booking_creation():
+def test_successful_booking_creation(active_site):
     booking = create_booking(
         visitor_email="test@example.com",
         visitor_name="Test User",
-        site_id=1,
+        site_id=active_site.site_id,
         visit_date=date.today(),
         number_of_people=2
     )
