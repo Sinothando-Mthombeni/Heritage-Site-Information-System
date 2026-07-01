@@ -1,0 +1,338 @@
+[
+  {"model": "core.province", "pk": 1, "fields": {"name": "Gauteng"}},
+  {"model": "core.province", "pk": 2, "fields": {"name": "Western Cape"}},
+  {"model": "core.province", "pk": 3, "fields": {"name": "KwaZulu-Natal"}},
+  {"model": "core.province", "pk": 4, "fields": {"name": "Mpumalanga"}},
+  {"model": "core.province", "pk": 5, "fields": {"name": "Limpopo"}},
+  {"model": "core.province", "pk": 6, "fields": {"name": "Northern Cape"}},
+  {"model": "core.province", "pk": 7, "fields": {"name": "Free State"}},
+  {"model": "core.province", "pk": 8, "fields": {"name": "Eastern Cape"}},
+  {"model": "core.province", "pk": 9, "fields": {"name": "North West"}},
+
+  {"model": "core.category", "pk": 1, "fields": {"name": "UNESCO World Heritage Site"}},
+  {"model": "core.category", "pk": 2, "fields": {"name": "Natural Reserve"}},
+  {"model": "core.category", "pk": 3, "fields": {"name": "Museum & Memorial"}},
+  {"model": "core.category", "pk": 4, "fields": {"name": "Archaeological Site"}},
+  {"model": "core.category", "pk": 5, "fields": {"name": "Historical Monument"}},
+  {"model": "core.category", "pk": 6, "fields": {"name": "Cultural Village"}},
+
+  {
+    "model": "core.heritagesite", "pk": 1,
+    "fields": {
+      "name": "Cradle of Humankind",
+      "description": "A World Heritage Site and paleoanthropological site located about 50 km northwest of Johannesburg. It contains one of the world's richest concentrations of hominid fossils, including Australopithecus africanus. The Maropeng Visitor Centre and Sterkfontein Caves are its major attractions.",
+      "entry_fee": "170.00",
+      "is_active": true,
+      "province": 1,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 2,
+    "fields": {
+      "name": "Robben Island",
+      "description": "A UNESCO World Heritage Site located in Table Bay, 6.9 km west of the coast of Bloubergstrand, Cape Town. Best known as the place where Nelson Mandela was imprisoned for 18 years, it served as a political prison and maximum security prison from 1961 to 1991. The island is now a museum and conservation area.",
+      "entry_fee": "880.00",
+      "is_active": true,
+      "province": 2,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 3,
+    "fields": {
+      "name": "iSimangaliso Wetland Park",
+      "description": "South Africa's first UNESCO World Heritage Site (1999), covering 332,000 hectares along the KwaZulu-Natal coast. The park encompasses five interlinked ecosystems including marine coral reefs, beaches, coastal dunes, lake systems, swamps, and woodlands. It supports Africa's largest estuarine system and is a breeding ground for leatherback and loggerhead turtles.",
+      "entry_fee": "240.00",
+      "is_active": true,
+      "province": 3,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 4,
+    "fields": {
+      "name": "Barberton Makhonjwa Mountains",
+      "description": "Inscribed as a UNESCO World Heritage Site in 2018, the Barberton Makhonjwa Mountains in Mpumalanga preserve the world's oldest and best-preserved sequences of volcanic and sedimentary rocks, dating back 3.5 billion years. They provide a unique window into the early conditions that gave rise to life on Earth.",
+      "entry_fee": "50.00",
+      "is_active": true,
+      "province": 4,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 5,
+    "fields": {
+      "name": "Mapungubwe Cultural Landscape",
+      "description": "A UNESCO World Heritage Site in the Limpopo Province at the confluence of the Limpopo and Shashe rivers. It was the centre of the largest kingdom in the sub-continent before Great Zimbabwe, with evidence of a sophisticated trading economy and social stratification dating from AD 900 to 1300. The iconic golden rhino figurine was found here.",
+      "entry_fee": "200.00",
+      "is_active": true,
+      "province": 5,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 6,
+    "fields": {
+      "name": "Cape Floral Region Protected Areas",
+      "description": "One of the world's six floral kingdoms and a UNESCO World Heritage Site, the Cape Floristic Region is the smallest yet most diverse, containing nearly 9,000 plant species of which 69% are endemic. The region includes Table Mountain National Park and several other protected areas along the Western Cape coast.",
+      "entry_fee": "350.00",
+      "is_active": true,
+      "province": 2,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 7,
+    "fields": {
+      "name": "Vredefort Dome",
+      "description": "A UNESCO World Heritage Site in the Free State, the Vredefort Dome is the world's largest verified meteorite impact structure (asteroid crater), with an estimated original diameter of 250-300 km. The impact occurred roughly 2 billion years ago. The dome itself, about 70 km in diameter, is located near the town of Parys.",
+      "entry_fee": "80.00",
+      "is_active": true,
+      "province": 7,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 8,
+    "fields": {
+      "name": "Richtersveld Cultural and Botanical Landscape",
+      "description": "A UNESCO World Heritage Site in the Northern Cape, the Richtersveld is a mountainous desert landscape of outstanding beauty that sustains a semi-nomadic pastoral way of life of the Nama people — the only remaining such practice in South Africa. It also contains extraordinary succulent plant diversity.",
+      "entry_fee": "180.00",
+      "is_active": true,
+      "province": 6,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 9,
+    "fields": {
+      "name": "Maloti-Drakensberg Park",
+      "description": "A transboundary UNESCO World Heritage Site shared between South Africa and Lesotho. It is a landscape of exceptional natural beauty: soaring basaltic buttresses, incisive dramatic cutbacks, and golden sandstone foothills. It also contains one of the largest and most complex collections of San (Bushmen) rock paintings in Africa, with more than 35,000 individual images.",
+      "entry_fee": "200.00",
+      "is_active": true,
+      "province": 3,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 10,
+    "fields": {
+      "name": "\u01c2Khomani Cultural Landscape",
+      "description": "A UNESCO World Heritage Site in the Kalahari region of the Northern Cape, covering 959,100 hectares. It is associated with the indigenous San people — the ǂKhomani — and encompasses extensive traces of the way of life of hunter-gatherer peoples who once lived across southern Africa. The property contains evidence of human occupation dating back over 10,000 years.",
+      "entry_fee": null,
+      "is_active": true,
+      "province": 6,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 11,
+    "fields": {
+      "name": "Nelson Mandela Legacy Sites",
+      "description": "A UNESCO World Heritage Site inscribed in 2023, comprising five sites associated with Nelson Mandela's long walk to freedom: Victor Verster Prison (Drakenstein), Robben Island (separately listed), the site of his arrest (Howick, KZN), Liliesleaf Farm (Johannesburg), and Constitution Hill. Liliesleaf Farm in Rivonia serves as the primary interpretive centre.",
+      "entry_fee": "100.00",
+      "is_active": true,
+      "province": 1,
+      "category": 1
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 12,
+    "fields": {
+      "name": "Apartheid Museum",
+      "description": "Opened in 2001, the Apartheid Museum in Johannesburg is recognised as the preeminent museum in the world dealing with 20th-century South Africa. It illustrates the rise and fall of apartheid through powerful photography, text, film, and artefacts, and contextualises the country's transition to democracy. The entrance assigns visitors randomly to 'White' or 'Non-White' doors as a visceral first experience.",
+      "entry_fee": "180.00",
+      "is_active": true,
+      "province": 1,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 13,
+    "fields": {
+      "name": "Voortrekker Monument",
+      "description": "Built and inaugurated in 1949, the Voortrekker Monument in Pretoria commemorates the Voortrekkers who left the Cape Colony between 1835 and 1854 in the Great Trek. The massive granite structure contains the Hall of Heroes with a 27-panel marble frieze depicting the history of the trek. The monument and its surrounding nature reserve are a declared South African national heritage site.",
+      "entry_fee": "120.00",
+      "is_active": true,
+      "province": 1,
+      "category": 5
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 14,
+    "fields": {
+      "name": "Constitution Hill",
+      "description": "Constitution Hill in Johannesburg is a living museum that tells the story of South Africa's journey to democracy. The complex includes the Old Fort Prison (where Mahatma Gandhi and Nelson Mandela were held), the Women's Jail, the Number Four (a notorious section for Black prisoners), and the Constitutional Court of South Africa, built partly from bricks of the demolished prison.",
+      "entry_fee": "80.00",
+      "is_active": true,
+      "province": 1,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 15,
+    "fields": {
+      "name": "Hector Pieterson Memorial and Museum",
+      "description": "Located in Soweto, Johannesburg, the Hector Pieterson Memorial commemorates the Soweto Uprising of 16 June 1976, when South African police opened fire on students protesting against Afrikaans-medium instruction. Hector Pieterson, aged 12, was among the first to be killed. The adjacent museum documents the events of the uprising and their aftermath through photographs and testimony.",
+      "entry_fee": "25.00",
+      "is_active": true,
+      "province": 1,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 16,
+    "fields": {
+      "name": "Castle of Good Hope",
+      "description": "The Castle of Good Hope in Cape Town is the oldest surviving colonial building in South Africa, completed in 1679 by the Dutch East India Company (VOC). It is a star fort with five bastions and served as the administrative and political centre of the VOC's operations in southern Africa. Today it houses the William Fehr Collection of historical artworks and the Castle Military Museum.",
+      "entry_fee": "90.00",
+      "is_active": true,
+      "province": 2,
+      "category": 5
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 17,
+    "fields": {
+      "name": "District Six Museum",
+      "description": "The District Six Museum in Cape Town commemorates the forced removal of over 60,000 residents from the multicultural District Six neighbourhood under the Group Areas Act between 1968 and 1982. Through maps, photographs, recordings, and personal narratives, the museum documents this displacement and the vibrant community that was destroyed. It continues to support the restitution of land to former residents.",
+      "entry_fee": "50.00",
+      "is_active": true,
+      "province": 2,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 18,
+    "fields": {
+      "name": "Nelson Mandela Museum",
+      "description": "The Nelson Mandela Museum in Mthatha, Eastern Cape, is a tribute to Nelson Mandela's life and legacy. Established in 2000, the museum encompasses three sites: the Bhunga Building in Mthatha (the main interpretive museum), the Youth and Heritage Centre in Qunu (near his childhood home), and the Mvezo Bunga in the village of Mvezo where Mandela was born. Together they trace his journey from rural chief's son to global icon.",
+      "entry_fee": "70.00",
+      "is_active": true,
+      "province": 8,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 19,
+    "fields": {
+      "name": "Anglo-Boer War Museum",
+      "description": "The Anglo-Boer War Museum (War Museum of the Boer Republics) in Bloemfontein is dedicated to the Anglo-Boer War (South African War) of 1899-1902. It preserves one of the most comprehensive collections of Boer War artefacts, documents, and photographs in the world. The adjacent Women's Memorial commemorates the 26,370 Boer women and children and more than 14,000 Black Africans who died in British concentration camps during the war.",
+      "entry_fee": "80.00",
+      "is_active": true,
+      "province": 7,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 20,
+    "fields": {
+      "name": "Freedom Park",
+      "description": "Freedom Park is a heritage destination and memorial in Pretoria that honours the victims of conflicts that shaped the history of South Africa, from the San people's struggles to the liberation struggle against apartheid. The memorial includes the eternal flame, the Wall of Names (listing over 80,000 people who died in these conflicts), and an extensive landscaped garden. It deliberately complements the adjacent Voortrekker Monument as two perspectives on South African history.",
+      "entry_fee": "80.00",
+      "is_active": true,
+      "province": 1,
+      "category": 3
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 21,
+    "fields": {
+      "name": "Blyde River Canyon Nature Reserve",
+      "description": "One of the largest canyons in the world and the largest 'green' canyon on Earth, the Blyde River Canyon in Mpumalanga stretches for 26 km with a depth of up to 800 metres. Highlights include the Three Rondavels (three cylindrical rock formations), Bourke's Luck Potholes (sculptured by the swirling waters of two rivers), and God's Window (a dramatic viewpoint over the Lowveld). The reserve supports an extraordinary diversity of wildlife and vegetation.",
+      "entry_fee": "50.00",
+      "is_active": true,
+      "province": 4,
+      "category": 2
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 22,
+    "fields": {
+      "name": "Addo Elephant National Park",
+      "description": "Addo Elephant National Park in the Eastern Cape is the third-largest national park in South Africa and home to over 600 African elephants. In 1931, when the park was proclaimed, only 11 elephants survived. It is now the only park in the world to protect all seven of the 'Big 7': elephant, lion, leopard, rhino, buffalo, great white shark, and southern right whale. The park spans three biomes — Valley Bushveld, Karoo, and Marine.",
+      "entry_fee": "232.00",
+      "is_active": true,
+      "province": 8,
+      "category": 2
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 23,
+    "fields": {
+      "name": "Pilanesberg National Park",
+      "description": "Situated in the crater of a 1.2-billion-year-old alkaline volcanic complex in North West Province, Pilanesberg National Park is unique in that it lies in a transition zone between the Kalahari and the Lowveld, resulting in an unusual diversity of species. It is a Big Five game reserve and, at 55,000 hectares, is one of the largest in the country. The park is accessible from Johannesburg (2 hours) and is adjacent to Sun City Resort.",
+      "entry_fee": "180.00",
+      "is_active": true,
+      "province": 9,
+      "category": 2
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 24,
+    "fields": {
+      "name": "Sterkfontein Caves",
+      "description": "Part of the Cradle of Humankind World Heritage Site, Sterkfontein Caves is the single most productive site for early hominid fossils in the world. It is where Mrs Ples (Australopithecus africanus, 2.5 million years old) and Little Foot (Australopithecus, 3.67 million years old) were discovered. Guided tours take visitors through the cave system and into the underground lake chamber.",
+      "entry_fee": "150.00",
+      "is_active": true,
+      "province": 1,
+      "category": 4
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 25,
+    "fields": {
+      "name": "Pilgrim's Rest Historic Village",
+      "description": "Proclaimed a National Monument in 1986, Pilgrim's Rest in Mpumalanga is a unique intact 19th-century gold-rush village. Gold was discovered here in 1873, and the town grew rapidly as prospectors flooded in. Unlike other mining towns it was never demolished, making it one of the best-preserved examples of a Victorian-era mining settlement in Africa. The entire village is a museum and several buildings are open for tours.",
+      "entry_fee": "60.00",
+      "is_active": true,
+      "province": 4,
+      "category": 5
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 26,
+    "fields": {
+      "name": "Ncome (Blood River) Monument",
+      "description": "The Ncome Museum and Monument in KwaZulu-Natal marks the site of the Battle of Blood River (16 December 1838), where a Voortrekker commando defeated a Zulu impi. The site contains two complementary museums facing each other across the Ncome River: the Afrikaner monument (a bronze replica of the wagons forming a laager) and the Zulu monument (Ncome Museum), which offers the Zulu perspective on the same historical event.",
+      "entry_fee": "30.00",
+      "is_active": true,
+      "province": 3,
+      "category": 5
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 27,
+    "fields": {
+      "name": "Shakaland Zulu Cultural Village",
+      "description": "Situated in the Nkwalini Valley in KwaZulu-Natal, Shakaland is an authentic Zulu cultural village where visitors can experience traditional Zulu life. Activities include sangoma (traditional healer) demonstrations, beer brewing, pottery, spear-making, traditional dancing, and overnight accommodation in authentic beehive huts. The complex was originally built as a film set for the TV series Shaka Zulu.",
+      "entry_fee": "395.00",
+      "is_active": true,
+      "province": 3,
+      "category": 6
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 28,
+    "fields": {
+      "name": "Botshabelo Ndebele Village",
+      "description": "Located near Middelburg in Mpumalanga, Botshabelo Ndebele Village is a living museum and cultural centre that preserves the traditions of the South Ndebele people, famous for their distinctive geometric wall-painting. The complex includes traditional homesteads decorated in the classic Ndebele style, a museum of Ndebele material culture, and demonstrations of beadwork, painting, and traditional practices. It is one of the few authentic Ndebele cultural villages accessible to the public.",
+      "entry_fee": "80.00",
+      "is_active": true,
+      "province": 4,
+      "category": 6
+    }
+  },
+  {
+    "model": "core.heritagesite", "pk": 29,
+    "fields": {
+      "name": "Mapoch Ndebele Village",
+      "description": "Situated near Rust de Winter in Limpopo, Mapoch Ndebele Village is an authentic community-run cultural experience of the Ndzundza Ndebele people. Unlike commercial cultural villages, Mapoch is a functioning community whose members welcome visitors into their daily lives, demonstrating traditional crafts, painting, dress and ceremony. It is regarded as one of the most authentic cultural tourism experiences in Limpopo province.",
+      "entry_fee": "70.00",
+      "is_active": true,
+      "province": 5,
+      "category": 6
+    }
+  }
+]
