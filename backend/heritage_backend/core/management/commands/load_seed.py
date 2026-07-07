@@ -116,6 +116,7 @@ class Command(BaseCommand):
             # Only the fields defined on the model (ignore any Wikidata extras
             # like latitude/longitude/image_url that aren't on the model yet)
             site_defaults = {
+                "name":        fields["name"],
                 "description": fields["description"],
                 "entry_fee":   fields.get("entry_fee"),
                 "is_active":   fields.get("is_active", True),
