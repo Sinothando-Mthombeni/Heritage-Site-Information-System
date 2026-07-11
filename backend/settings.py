@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 
 load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env.local", override=True)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
 
