@@ -1,10 +1,6 @@
-name: CI Pipeline
+name: CI
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -14,31 +10,38 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: heritage_test_db
+          POSTGRES_DB: heritage_db
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       mongo:
         image: mongo:6
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     env:
-      DB_NAME: heritage_test_db
+      DJANGO_SETTINGS_MODULE: settings
+      SECRET_KEY: ci-test-secret-key-not-used-in-production
+      DEBUG: "False"
+      DB_NAME: heritage_db
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_HOST: localhost
       DB_PORT: 5432
-      DJANGO_SETTINGS_MODULE: settings
-      SECRET_KEY: test-secret-key
-      DEBUG: "False"
+      MONGO_URI: mongodb://localhost:27017/
+      MONGO_DB_NAME: heritage_phase3
 
     steps:
       - name: Checkout repository
@@ -53,20 +56,16 @@ jobs:
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Run Django checks
+      - name: Run system check
         working-directory: backend
-        run: |
-          python manage.py check
+        run: python manage.py check
 
-      - name: Run database migrations
+      - name: Run migrations
         working-directory: backend
-        run: |
-          python manage.py migrate
+        run: python manage.py migrate
 
       - name: Run tests
         working-directory: backend
-        run: |
-          pytest
+        run: python -m pytest -v
