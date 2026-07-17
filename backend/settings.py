@@ -4,11 +4,14 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
 
-load_dotenv(BASE_DIR / ".env")
-load_dotenv(BASE_DIR / ".env.local", override=True)
+# Load .env only if it exists — CI sets all vars directly as environment
+# variables so no .env file is needed or expected there.
+# Never load .env.local here — use shell-level env vars for local overrides.
+_env_path = BASE_DIR / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
-
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
