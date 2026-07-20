@@ -1,9 +1,7 @@
 from django.http import JsonResponse
 from heritage_backend.services.reporting_service import (
-    bookings_per_site,
-    average_group_size,
-    monthly_booking_stats,
-    sites_with_provinces,
+    bookings_per_site, average_group_size,
+    monthly_booking_stats, sites_with_provinces,
 )
 
 def bookings_per_site_view(request):
@@ -19,5 +17,7 @@ def monthly_booking_stats_view(request):
     return JsonResponse(data, safe=False)
 
 def sites_with_provinces_view(request):
-    data = list(sites_with_provinces().values("site_id", "name", "province__name", "entry_fee"))
-    return JsonResponse(data, safe=False)
+    qs = sites_with_provinces().values(
+        "site_id","name","province__name","entry_fee","is_active"
+    )
+    return JsonResponse(list(qs), safe=False)

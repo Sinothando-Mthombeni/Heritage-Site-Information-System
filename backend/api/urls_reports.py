@@ -1,9 +1,7 @@
 from django.urls import path
 from .views_reports import (
-    bookings_per_site_view,
-    average_group_size_view,
-    monthly_booking_stats_view,
-    sites_with_provinces_view,
+    bookings_per_site_view, average_group_size_view,
+    monthly_booking_stats_view, sites_with_provinces_view,
 )
 
 urlpatterns = [

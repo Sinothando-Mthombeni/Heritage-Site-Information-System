@@ -2,6 +2,11 @@
 
 A full-stack web application for managing and analysing cultural heritage site data across South Africa's nine provinces. Built as a portfolio project demonstrating polyglot persistence, REST API design, ETL pipeline engineering, containerised deployment, and CI/CD.
 
+[![CI](https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-
+System/actions/workflows/ci.yml/badge.svg)](https://github.com/Sinothando-
+Mthombeni/Heritage-Site-Information-System/actions/workflows/ci.yml)
+
+
 ---
 
 ## Architecture
@@ -303,9 +308,9 @@ Heritage-Site-Information-System/
 |---|---|---|
 | `SECRET_KEY` | Django secret key | — |
 | `DEBUG` | Debug mode | `False` |
-| `DB_NAME` | PostgreSQL database name | `heritage_db` |
-| `DB_USER` | PostgreSQL user | `postgres` |
-| `DB_PASSWORD` | PostgreSQL password | `postgres` |
+| `DB_NAME` | PostgreSQL database name | `*******` |
+| `DB_USER` | PostgreSQL user | `*******` |
+| `DB_PASSWORD` | PostgreSQL password | `******` |
 | `DB_HOST` | PostgreSQL host | `postgres` |
 | `DB_PORT` | PostgreSQL port | `5432` |
 | `MONGO_URI` | MongoDB connection URI | `mongodb://mongo:27017/` |
