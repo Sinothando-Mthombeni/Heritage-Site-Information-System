@@ -15,4 +15,7 @@ def average_entry_fee():
         {"$group": {"_id": None, "avgFee": {"$avg": "$entry_fee"}}}
     ]
     result = list(heritage_sites.aggregate(pipeline))
-    return result[0]["avgFee"] if result else 0
+    if not result:
+        return 0
+    avg = result[0].get("avgFee")
+    return avg if avg is not None else 0
