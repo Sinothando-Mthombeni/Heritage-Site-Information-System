@@ -1,0 +1,245 @@
+{% extends "heritage_backend/base.html" %}
+{% block title %}Analytics Dashboard — HeritageSA{% endblock %}
+{% block nav_dash %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <h1><i class="bi bi-bar-chart-line me-2"></i>Analytics Dashboard</h1>
+    <p class="lead mt-2">
+      Live booking statistics and site performance metrics from the PostgreSQL
+      reporting layer.
+    </p>
+  </div>
+</section>
+
+<!-- Stat cards -->
+<div class="container mt-4">
+  <div class="row g-3">
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card p-3 text-center">
+        <div class="stat-number" id="stat-sites">—</div>
+        <div class="text-muted small">Active Sites</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card p-3 text-center">
+        <div class="stat-number" id="stat-bookings">—</div>
+        <div class="text-muted small">Total Bookings</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card p-3 text-center">
+        <div class="stat-number" id="stat-avg-group">—</div>
+        <div class="text-muted small">Avg Group Size</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card stat-card p-3 text-center">
+        <div class="stat-number" id="stat-provinces">9</div>
+        <div class="text-muted small">Provinces Covered</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="container mt-4">
+  <div class="row g-4">
+
+    <!-- Bookings per site -->
+    <div class="col-lg-7">
+      <div class="card chart-card p-4">
+        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:.75rem;letter-spacing:.06em;">
+          Bookings per Site
+        </h6>
+        <div id="bps-empty" class="text-center py-4 text-muted d-none">
+          <i class="bi bi-calendar-x" style="font-size:2rem;"></i>
+          <p class="mt-2 small">No bookings yet. Create a booking on the home page.</p>
+        </div>
+        <canvas id="chart-bps" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Monthly trends -->
+    <div class="col-lg-5">
+      <div class="card chart-card p-4">
+        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:.75rem;letter-spacing:.06em;">
+          Monthly Booking Trend
+        </h6>
+        <div id="monthly-empty" class="text-center py-4 text-muted d-none">
+          <i class="bi bi-graph-up" style="font-size:2rem;"></i>
+          <p class="mt-2 small">No booking history yet.</p>
+        </div>
+        <canvas id="chart-monthly" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Sites table -->
+    <div class="col-12">
+      <div class="card chart-card p-4">
+        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:.75rem;letter-spacing:.06em;">
+          All Heritage Sites
+        </h6>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Province</th>
+                <th>Entry Fee</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="sites-table-body">
+              <tr><td colspan="5" class="text-center py-3 text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const NAVY  = '#1F3864';
+const GREEN = '#007A4D';
+const GOLD  = '#FFB612';
+
+async function loadDashboard() {
+  try {
+    const [bpsRes, avgRes, monthlyRes, sitesRes] = await Promise.all([
+      fetch('/api/reports/bookings-per-site/'),
+      fetch('/api/reports/average-group-size/'),
+      fetch('/api/reports/monthly-stats/'),
+      fetch('/api/reports/sites/'),
+    ]);
+
+    const bpsData     = await bpsRes.json();
+    const avgData     = await avgRes.json();
+    const monthlyData = await monthlyRes.json();
+    const sitesData   = await sitesRes.json();
+
+    // ── Stat cards ───────────────────────────────────────────────────────────
+    document.getElementById('stat-sites').textContent =
+      sitesData.filter(s => s.is_active).length;
+    document.getElementById('stat-bookings').textContent =
+      bpsData.reduce((sum, r) => sum + (r.total || 0), 0);
+    document.getElementById('stat-avg-group').textContent =
+      avgData.average_group_size
+        ? avgData.average_group_size.toFixed(1)
+        : '0';
+
+    // ── Bookings per site bar chart ───────────────────────────────────────────
+    if (bpsData.length === 0) {
+      document.getElementById('bps-empty').classList.remove('d-none');
+      document.getElementById('chart-bps').style.display = 'none';
+    } else {
+      new Chart(document.getElementById('chart-bps'), {
+        type: 'bar',
+        data: {
+          labels:   bpsData.map(r => r.heritage_site__name),
+          datasets: [{
+            label:           'Bookings',
+            data:            bpsData.map(r => r.total),
+            backgroundColor: NAVY,
+            borderRadius:    6,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { ticks: { maxRotation: 40 } },
+          },
+        },
+      });
+    }
+
+    // ── Monthly trend line chart ──────────────────────────────────────────────
+    if (monthlyData.length === 0) {
+      document.getElementById('monthly-empty').classList.remove('d-none');
+      document.getElementById('chart-monthly').style.display = 'none';
+    } else {
+      new Chart(document.getElementById('chart-monthly'), {
+        type: 'line',
+        data: {
+          labels:   monthlyData.map(r => r.month),
+          datasets: [{
+            label:           'Bookings',
+            data:            monthlyData.map(r => r.total_bookings),
+            borderColor:     GREEN,
+            backgroundColor: 'rgba(0,122,77,.1)',
+            tension:         0.4,
+            fill:            true,
+            pointRadius:     4,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        },
+      });
+    }
+
+    // ── Sites table ───────────────────────────────────────────────────────────
+    const tbody = document.getElementById('sites-table-body');
+    if (sitesData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">No sites loaded.</td></tr>';
+    } else {
+      tbody.innerHTML = sitesData.map(s => `
+        <tr>
+          <td class="fw-semibold">${s.name}</td>
+          <td><span class="badge" style="background:#007A4D">${s.province__name}</span></td>
+          <td>${s.entry_fee != null ? 'R' + parseFloat(s.entry_fee).toFixed(0) : '<span class="text-success">Free</span>'}</td>
+          <td>
+            ${s.is_active
+              ? '<span class="badge bg-success">Active</span>'
+              : '<span class="badge bg-secondary">Inactive</span>'}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-primary"
+                    data-book-site="${s.site_id}"
+                    data-book-name="${s.name}">
+              <i class="bi bi-calendar-plus me-1"></i>Book
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Re-attach booking modal listeners for dynamically added buttons
+      document.querySelectorAll('[data-book-site]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('bk-site-id').value    = btn.dataset.bookSite;
+          document.getElementById('modal-site-name').textContent =
+            'Booking for: ' + btn.dataset.bookName;
+          document.getElementById('booking-alert').classList.add('d-none');
+          document.getElementById('bk-submit').style.display = '';
+          ['bk-name','bk-email'].forEach(id => document.getElementById(id).value = '');
+          document.getElementById('bk-people').value = '1';
+          new bootstrap.Modal(document.getElementById('bookingModal')).show();
+        });
+      });
+    }
+
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+  }
+}
+
+loadDashboard();
+</script>
+{% endblock %}

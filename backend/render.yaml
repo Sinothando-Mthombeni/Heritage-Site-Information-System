@@ -1,0 +1,62 @@
+# render.yaml — Render Blueprint
+# Defines the web service and managed PostgreSQL database.
+# MongoDB is provided by MongoDB Atlas (external) — set MONGO_URI manually.
+#
+# Deploy steps:
+#   1. Push this file to GitHub
+#   2. Go to render.com → New → Blueprint → connect this repo
+#   3. Render creates the web service and postgres DB automatically
+#   4. Add MONGO_URI manually in the Render dashboard (Environment tab)
+
+services:
+  - type: web
+    name: heritage-site-system
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: oregon
+
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true          # Render generates a secure random value
+
+      - key: DEBUG
+        value: "False"
+
+      - key: ALLOWED_HOSTS
+        value: "localhost,127.0.0.1"  # RENDER_EXTERNAL_HOSTNAME added automatically
+
+      - key: DB_NAME
+        fromDatabase:
+          name: heritage-db
+          property: database
+
+      - key: DB_USER
+        fromDatabase:
+          name: heritage-db
+          property: user
+
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: heritage-db
+          property: password
+
+      - key: DB_HOST
+        fromDatabase:
+          name: heritage-db
+          property: host
+
+      - key: DB_PORT
+        fromDatabase:
+          name: heritage-db
+          property: port
+
+      # Set these manually in the Render dashboard after connecting MongoDB Atlas:
+      # MONGO_URI  = mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/
+      # MONGO_DB_NAME = heritage_phase3
+
+databases:
+  - name: heritage-db
+    databaseName: heritage_db
+    user: heritage_user
+    region: oregon

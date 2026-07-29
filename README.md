@@ -1,10 +1,10 @@
 # Heritage Site Information System
 
+> 🌐 **Live demo:** [heritage-site-system.onrender.com](https://heritage-site-system.onrender.com) *(add after Render deployment)*
+
 A full-stack web application for managing and analysing cultural heritage site data across South Africa's nine provinces. Built as a portfolio project demonstrating polyglot persistence, REST API design, ETL pipeline engineering, containerised deployment, and CI/CD.
 
-[![CI](https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-
-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Sinothando-
-Mthombeni/Heritage-Site-Information-System/actions/workflows/ci.yml)
+[![CI](https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-System/actions/workflows/ci.yml)
 
 
 ---

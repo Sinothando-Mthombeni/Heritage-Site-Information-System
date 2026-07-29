@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Heritage Site Information System{% endblock %}</title>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <style>
+    :root {
+      --sa-green:  #007A4D;
+      --sa-gold:   #FFB612;
+      --sa-navy:   #1F3864;
+      --sa-light:  #F8F9FA;
+    }
+
+    body { background: var(--sa-light); font-family: 'Segoe UI', sans-serif; }
+
+    .navbar-brand span { color: var(--sa-gold); }
+    .navbar { background: var(--sa-navy) !important; }
+    .navbar .nav-link { color: rgba(255,255,255,.85) !important; }
+    .navbar .nav-link:hover,
+    .navbar .nav-link.active { color: var(--sa-gold) !important; }
+
+    .hero {
+      background: linear-gradient(135deg, var(--sa-navy) 0%, var(--sa-green) 100%);
+      color: #fff;
+      padding: 4rem 0 3rem;
+    }
+    .hero h1 { font-weight: 700; font-size: 2.4rem; }
+    .hero p   { opacity: .85; max-width: 560px; }
+
+    .site-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      transition: transform .2s, box-shadow .2s;
+      height: 100%;
+    }
+    .site-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.13); }
+
+    .badge-category { background: var(--sa-navy); font-size: .72rem; }
+    .badge-province { background: var(--sa-green); font-size: .72rem; }
+
+    .fee-badge {
+      background: var(--sa-gold);
+      color: #000;
+      font-weight: 600;
+      font-size: .78rem;
+      border-radius: 20px;
+      padding: .2rem .7rem;
+    }
+    .fee-free { background: #d1fae5; color: #065f46; }
+
+    .stat-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    }
+    .stat-number { font-size: 2.2rem; font-weight: 700; color: var(--sa-navy); }
+
+    .chart-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    }
+
+    .btn-primary   { background: var(--sa-navy);  border-color: var(--sa-navy); }
+    .btn-primary:hover { background: #142950; border-color: #142950; }
+    .btn-success   { background: var(--sa-green); border-color: var(--sa-green); }
+    .btn-success:hover { background: #005c3a; border-color: #005c3a; }
+
+    footer { background: var(--sa-navy); color: rgba(255,255,255,.7); font-size: .85rem; }
+    footer a { color: var(--sa-gold); text-decoration: none; }
+
+    #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">
+      <i class="bi bi-geo-alt-fill me-1"></i>Heritage<span>SA</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link {% block nav_home %}{% endblock %}" href="/">
+            <i class="bi bi-house me-1"></i>Sites
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_dash %}{% endblock %}" href="/dashboard/">
+            <i class="bi bi-bar-chart-line me-1"></i>Analytics
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/" target="_blank">
+            <i class="bi bi-shield-lock me-1"></i>Admin
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Flash messages -->
+{% if messages %}
+<div id="toast-container">
+  {% for message in messages %}
+  <div class="toast show align-items-center text-white
+    {% if message.tags == 'error' %}bg-danger{% else %}bg-success{% endif %}
+    border-0 mb-2" role="alert">
+    <div class="d-flex">
+      <div class="toast-body">{{ message }}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Page content -->
+{% block content %}{% endblock %}
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header" style="background:var(--sa-navy);color:#fff;">
+        <h5 class="modal-title">
+          <i class="bi bi-calendar-plus me-2"></i>Book a Visit
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted mb-3" id="modal-site-name"></p>
+
+        <div id="booking-alert" class="alert d-none" role="alert"></div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Your Name</label>
+          <input type="text" class="form-control" id="bk-name"
+                 placeholder="Full name" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Email Address</label>
+          <input type="email" class="form-control" id="bk-email"
+                 placeholder="you@example.com" />
+        </div>
+        <div class="row g-3">
+          <div class="col-7">
+            <label class="form-label fw-semibold">Visit Date</label>
+            <input type="date" class="form-control" id="bk-date" />
+          </div>
+          <div class="col-5">
+            <label class="form-label fw-semibold">Group Size</label>
+            <input type="number" class="form-control" id="bk-people"
+                   min="1" value="1" />
+          </div>
+        </div>
+        <input type="hidden" id="bk-site-id" />
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-success px-4" id="bk-submit">
+          <i class="bi bi-check-circle me-1"></i>Confirm Booking
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="py-4 mt-5">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <strong class="text-white">HeritageSA</strong> — Portfolio project by
+        <a href="https://github.com/Sinothando-Mthombeni">Sinothando Mthombeni</a>
+      </div>
+      <div class="col-md-6 text-md-end mt-2 mt-md-0">
+        <a href="https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-System"
+           class="me-3"><i class="bi bi-github me-1"></i>GitHub</a>
+        <a href="/api/mongo/sites/">API</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Global booking modal JS -->
+<script>
+(function () {
+  // Set today as minimum selectable date
+  const bkDate = document.getElementById('bk-date');
+  if (bkDate) bkDate.min = new Date().toISOString().split('T')[0];
+
+  // Open modal and pre-fill site info
+  document.querySelectorAll('[data-book-site]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('bk-site-id').value = btn.dataset.bookSite;
+      document.getElementById('modal-site-name').textContent =
+        'Booking for: ' + btn.dataset.bookName;
+      document.getElementById('booking-alert').classList.add('d-none');
+      ['bk-name','bk-email','bk-people'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'bk-people' ? '1' : '';
+      });
+      new bootstrap.Modal(document.getElementById('bookingModal')).show();
+    });
+  });
+
+  // Submit booking
+  const submitBtn = document.getElementById('bk-submit');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async () => {
+      const alert = document.getElementById('booking-alert');
+      const payload = {
+        visitor_name:     document.getElementById('bk-name').value.trim(),
+        visitor_email:    document.getElementById('bk-email').value.trim(),
+        site_id:          parseInt(document.getElementById('bk-site-id').value),
+        visit_date:       document.getElementById('bk-date').value,
+        number_of_people: parseInt(document.getElementById('bk-people').value),
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Booking…';
+
+      try {
+        const res = await fetch('/api/bookings/create/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json',
+                     'X-CSRFToken': getCookie('csrftoken') },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        alert.classList.remove('d-none', 'alert-danger', 'alert-success');
+        if (res.ok && data.status === 'success') {
+          alert.classList.add('alert-success');
+          alert.innerHTML =
+            `<i class="bi bi-check-circle me-1"></i>
+             Booking confirmed! Reference #${data.booking_id} for ${data.site}
+             on ${data.visit_date}.`;
+          submitBtn.style.display = 'none';
+        } else {
+          alert.classList.add('alert-danger');
+          const errs = data.errors
+            ? Object.values(data.errors).flat().join(' ')
+            : data.message || 'Something went wrong.';
+          alert.innerHTML = `<i class="bi bi-exclamation-circle me-1"></i>${errs}`;
+        }
+      } catch {
+        alert.classList.remove('d-none');
+        alert.classList.add('alert-danger');
+        alert.textContent = 'Network error — please try again.';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirm Booking';
+      }
+    });
+  }
+
+  function getCookie(name) {
+    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+})();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

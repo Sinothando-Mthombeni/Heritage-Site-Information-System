@@ -4,9 +4,6 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# Load .env only if it exists — CI sets all vars directly as environment
-# variables so no .env file is needed or expected there.
-# Never load .env.local here — use shell-level env vars for local overrides.
 _env_path = BASE_DIR / ".env"
 if _env_path.exists():
     load_dotenv(_env_path)
@@ -15,8 +12,16 @@ SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
-    h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
 ]
+
+# Render provides RENDER_EXTERNAL_HOSTNAME automatically — include it so
+# the health-check and domain work without manual ALLOWED_HOSTS config.
+_render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -33,6 +38,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise must be immediately after SecurityMiddleware
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -46,7 +53,7 @@ ROOT_URLCONF = "heritage_backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "heritage_backend" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -87,6 +94,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise: compress and cache static files in production
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
@@ -94,6 +104,5 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-# MongoDB (analytical workload) connection settings, used by heritage_backend/mongo/client.py
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+MONGO_URI     = os.getenv("MONGO_URI",     "mongodb://localhost:27017/")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "heritage_phase3")
