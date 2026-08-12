@@ -221,6 +221,10 @@
       document.getElementById('modal-site-name').textContent =
         'Booking for: ' + btn.dataset.bookName;
       document.getElementById('booking-alert').classList.add('d-none');
+      const sub = document.getElementById('bk-submit');
+      sub.style.display = '';
+      sub.disabled = false;
+      sub.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirm Booking';
       ['bk-name','bk-email','bk-people'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = id === 'bk-people' ? '1' : '';
@@ -258,9 +262,12 @@
           alert.classList.add('alert-success');
           alert.innerHTML =
             `<i class="bi bi-check-circle me-1"></i>
-             Booking confirmed! Reference #${data.booking_id} for ${data.site}
-             on ${data.visit_date}.`;
-          submitBtn.style.display = 'none';
+            Booking confirmed! Reference #${data.booking_id} for ${data.site}
+            on ${data.visit_date}.`;
+          submitBtn.textContent = 'Done';
+        setTimeout(() => {
+          bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+        }, 2500);  
         } else {
           alert.classList.add('alert-danger');
           const errs = data.errors
@@ -278,6 +285,19 @@
       }
     });
   }
+  document.getElementById('bookingModal')
+  .addEventListener('hidden.bs.modal', function () {
+    document.getElementById('booking-alert').classList.add('d-none');
+    const s = document.getElementById('bk-submit');
+    s.style.display = '';
+    s.disabled = false;
+    s.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirm Booking';
+    document.getElementById('bk-date').value = '';
+    ['bk-name','bk-email'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('bk-people').value = '1';
+  });
 
   function getCookie(name) {
     const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
