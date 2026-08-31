@@ -198,3 +198,67 @@ class TestReportingEndpoints:
         first = response.json()[0]
         for key in ("site_id", "name", "province__name", "entry_fee"):
             assert key in first, f"Expected key '{key}' missing"
+
+# ════════════════════════════════════════════════════════════════════════
+# PHASE 1 TESTS
+# ════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.django_db
+class TestCORSHeaders:
+    def test_cors_header_present_for_allowed_origin(self):
+        response = Client().get('/api/reports/sites/',
+            HTTP_ORIGIN='http://localhost:3000')
+        assert response.status_code == 200
+        assert 'Access-Control-Allow-Origin' in response
+
+    def test_cors_header_absent_for_unknown_origin(self):
+        response = Client().get('/api/reports/sites/',
+            HTTP_ORIGIN='http://evil-domain.com')
+        assert 'Access-Control-Allow-Origin' not in response
+
+
+@pytest.mark.django_db
+class TestPublicDiscoverPage:
+    def test_discover_returns_200(self):
+        assert Client().get('/discover/').status_code == 200
+
+    def test_admin_dashboard_redirects_anonymous(self):
+        assert Client().get('/admin-dashboard/').status_code == 302
+
+    def test_province_counts_shape(self, active_site):
+        r = Client().get('/api/reports/province-counts/')
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert 'province__name' in data[0] and 'count' in data[0]
+    def test_category_counts_shape(self, active_site):
+        r = Client().get('/api/reports/category-counts/')
+        assert r.status_code == 200
+        data = r.json()
+        assert 'category__name' in data[0] and 'count' in data[0]
+
+    def test_featured_sites_shape(self, active_site):
+        r = Client().get('/api/reports/featured/')
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) >= 1
+        for key in ('site_id','name','description','province','category'):
+            assert key in data[0]
+
+
+@pytest.mark.django_db
+class TestModelStr:
+    def test_province_str(self, active_site):
+        from heritage_backend.core.models import Province
+        prov = Province.objects.first()
+        assert str(prov) == prov.name
+
+    def test_site_str(self, active_site):
+        assert str(active_site) == f'{active_site.name} ({active_site.province})'
+
+    def test_booking_indexes_defined(self):
+        from heritage_backend.core.models import Booking
+        names = [i.name for i in Booking._meta.indexes]
+        assert 'booking_visit_date_idx' in names
+        assert 'booking_site_idx' in names

@@ -3,12 +3,17 @@ import os
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
+_env = BASE_DIR / '.env'
+if _env.exists(): load_dotenv(_env)
 
-_env_path = BASE_DIR / ".env"
-if _env_path.exists():
-    load_dotenv(_env_path)
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+SENTRY_DSN = os.getenv('SENTRY_DSN','')
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN,integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,send_default_pii=False)
 
-SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
+SECRET_KEY = os.getenv('SECRET_KEY','insecure-dev-key')
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
@@ -19,9 +24,9 @@ ALLOWED_HOSTS = [
 
 # Render provides RENDER_EXTERNAL_HOSTNAME automatically — include it so
 # the health-check and domain work without manual ALLOWED_HOSTS config.
-_render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if _render_host and _render_host not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(_render_host)
+_rh = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if _rh and _rh not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_rh)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -31,7 +36,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-
+    "corsheaders",
+    
     "heritage_backend.core",
     "api",
 ]
@@ -41,11 +47,13 @@ MIDDLEWARE = [
     # WhiteNoise must be immediately after SecurityMiddleware
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
 ]
 
 ROOT_URLCONF = "heritage_backend.urls"
@@ -86,6 +94,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Africa/Johannesburg"
 USE_I18N = True
@@ -108,5 +117,29 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",      # local frontend dev
+    "http://localhost:8000"   
+]
+if _rh: CORS_ALLOWED_ORIGINS.append(f'https://{_rh}')
+CORS_ALLOW_CREDENTIALS = True
+
+RATELIMIT_VIEW = 'api.views_pg.ratelimit_error'
+
+#Auth URLs (for phase 3)
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+SESSION_COOKIE_AGE = 86400 * 7
+
+#MongoDB
 MONGO_URI     = os.getenv("MONGO_URI",     "mongodb://localhost:27017/")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "heritage_phase3")
+
+#Logging
+LOGGING = {'version' : 1,
+            'disable_existing_loggers': False,
+            'formatters':{'verbose':{'format':'{levelname} {asctime} {module} {message}', 'style':'{'}},
+            'handlers':{'console':{'class':'logging.StreamHandler','formatter':'verbose'}},
+            'root':{'handlers':['console'],'level':'INFO'},
+            'loggers':{'django':{'handlers':['console'],'level':'INFO','propagate':False},
+            'heritage_backend':{'handlers':['console'],'level':'DEBUG','propagate':False}}}

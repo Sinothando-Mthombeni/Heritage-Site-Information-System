@@ -1,0 +1,41 @@
+{% extends 'heritage_backend/base.html' %}
+{% block title %}Discover South African Heritage{% endblock %}
+{% block nav_discover %}active{% endblock %}
+{% block extra_head %}<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'></script>{% endblock %}
+{% block content %}
+<section class='hero'>
+  <div class='container'>
+    <h1><i class='bi bi-compass me-2'></i>Discover South Africa's Heritage</h1>
+    <p class='lead mt-2'>Explore {{ total_sites }} sites across {{ total_provinces }} provinces in {{ total_categories }} categories.</p>
+  </div>
+</section>
+<div class='container mt-4'>
+  <div class='row g-3 mb-5'>
+    <div class='col-4'><div class='card stat-card p-3 text-center'><div class='stat-number'>{{ total_sites }}</div><div class='text-muted small'>Heritage Sites</div></div></div>
+    <div class='col-4'><div class='card stat-card p-3 text-center'><div class='stat-number'>{{ total_provinces }}</div><div class='text-muted small'>Provinces</div></div></div>
+    <div class='col-4'><div class='card stat-card p-3 text-center'><div class='stat-number'>{{ total_categories }}</div><div class='text-muted small'>Categories</div></div></div>
+  </div>
+  <h2 class='mb-3'>Featured Sites</h2>
+  <div class='row g-4 mb-5' id='featured-grid'><div class='col-12 text-muted small'>Loading...</div></div>
+  <div class='row g-4 mb-5'>
+    <div class='col-md-6'><div class='card chart-card p-4'><h5 class='mb-3'>Sites by Category</h5><canvas id='chart-cat' height='260'></canvas></div></div>
+    <div class='col-md-6'><div class='card chart-card p-4'><h5 class='mb-3'>Sites by Province</h5><canvas id='chart-prov' height='260'></canvas></div></div>
+  </div>
+  <div class='card p-4 mb-5' style='background:#EAF1F8;border:none;border-radius:12px;'>
+    <h4><i class='bi bi-lightbulb me-2' style='color:#FFB612'></i>Did You Know?</h4>
+    <p id='dyk' class='mb-0 mt-2'></p>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+const FACTS=['The Cradle of Humankind contains over 40% of all known hominid fossils.','Robben Island was where Nelson Mandela served 18 of his 27 years of imprisonment.','South Africa has 11 UNESCO World Heritage Sites — the most on the African continent.','The Vredefort Dome is the world\'s largest verified meteorite impact structure at 250km wide.','The Castle of Good Hope is the oldest surviving building in South Africa, completed in 1679.','The ǂKhomani Cultural Landscape contains human occupation evidence dating back 10,000 years.'];
+document.getElementById('dyk').textContent=FACTS[Math.floor(Math.random()*FACTS.length)];
+async function loadDiscover(){
+  try{ const d=await(await fetch('/api/reports/featured/')).json();
+    document.getElementById('featured-grid').innerHTML=d.map(s=>`<div class='col-md-4'><div class='card site-card h-100'><div style='height:5px;background:#007A4D;'></div><div class='card-body p-3'><span class='badge mb-2' style='background:#1F3864'>${s.category}</span><h6 class='fw-bold'>${s.name}</h6><p class='small text-muted'>${s.description.substring(0,120)}...</p><small class='text-muted'><i class='bi bi-geo-alt'></i> ${s.province}</small></div></div></div>`).join(''); }catch(e){}
+  try{ const d=await(await fetch('/api/reports/category-counts/')).json();
+    new Chart(document.getElementById('chart-cat'),{type:'doughnut',data:{labels:d.map(x=>x.category__name),datasets:[{data:d.map(x=>x.count),backgroundColor:['#1F3864','#007A4D','#2E75B6','#FFB612','#6f42c1','#fd7e14']}]},options:{plugins:{legend:{position:'bottom'}}}}); }catch(e){}
+  try{ const d=await(await fetch('/api/reports/province-counts/')).json();
+    new Chart(document.getElementById('chart-prov'),{type:'bar',data:{labels:d.map(x=>x.province__name),datasets:[{label:'Sites',data:d.map(x=>x.count),backgroundColor:'#007A4D',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}}); }catch(e){}}
+loadDiscover();
+</script>{% endblock %}

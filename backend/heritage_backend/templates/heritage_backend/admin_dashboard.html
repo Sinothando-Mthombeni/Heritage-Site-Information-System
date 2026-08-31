@@ -1,0 +1,36 @@
+{% extends 'heritage_backend/base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block extra_head %}<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'></script>{% endblock %}
+{% block content %}
+<section class='hero'><div class='container'><h1><i class='bi bi-bar-chart-line me-2'></i>Admin Analytics</h1><p class='lead'>Operational data — staff access only.</p></div></section>
+<div class='container mt-4'>
+  <div class='row g-3 mb-4'>
+    <div class='col-6 col-lg-3'><div class='card stat-card p-3 text-center'><div class='stat-number' id='s-bk'>—</div><div class='text-muted small'>Total Bookings</div></div></div>
+    <div class='col-6 col-lg-3'><div class='card stat-card p-3 text-center'><div class='stat-number' id='s-avg'>—</div><div class='text-muted small'>Avg Group Size</div></div></div>
+    <div class='col-6 col-lg-3'><div class='card stat-card p-3 text-center'><div class='stat-number' id='s-sites'>—</div><div class='text-muted small'>Active Sites</div></div></div>
+    <div class='col-6 col-lg-3'><div class='card stat-card p-3 text-center'><div class='stat-number'>9</div><div class='text-muted small'>Provinces</div></div></div>
+  </div>
+  <div class='row g-4 mb-4'>
+    <div class='col-lg-7'><div class='card chart-card p-4'><h6 class='fw-bold text-muted text-uppercase mb-3' style='font-size:.75rem;'>Bookings per Site</h6><div id='bps-empty' class='text-center py-4 text-muted d-none'>No bookings yet.</div><canvas id='chart-bps' height='220'></canvas></div></div>
+    <div class='col-lg-5'><div class='card chart-card p-4'><h6 class='fw-bold text-muted text-uppercase mb-3' style='font-size:.75rem;'>Monthly Trend</h6><div id='mt-empty' class='text-center py-4 text-muted d-none'>No data.</div><canvas id='chart-mt' height='220'></canvas></div></div>
+  </div>
+  <div class='card chart-card p-4'>
+    <div class='d-flex justify-content-between align-items-center mb-3'>
+      <h6 class='fw-bold text-muted text-uppercase mb-0' style='font-size:.75rem;'>All Sites</h6>
+      <a href='/api/reports/export/bookings/' class='btn btn-sm btn-outline-success'><i class='bi bi-download me-1'></i>Export CSV</a>
+    </div>
+    <div class='table-responsive'><table class='table table-hover mb-0'><thead class='table-light'><tr><th>Site</th><th>Province</th><th>Fee</th><th>Status</th></tr></thead><tbody id='tbl'><tr><td colspan='4' class='text-center py-3 text-muted'>Loading...</td></tr></tbody></table></div>
+  </div>
+</div>{% endblock %}
+{% block extra_js %}<script>
+async function load(){
+  const[b,a,m,s]=await Promise.all([fetch('/api/reports/bookings-per-site/'),fetch('/api/reports/average-group-size/'),fetch('/api/reports/monthly-stats/'),fetch('/api/reports/sites/')]);
+  const bps=await b.json(),avg=await a.json(),mo=await m.json(),sites=await s.json();
+  document.getElementById('s-bk').textContent=bps.reduce((s,r)=>s+(r.total||0),0);
+  document.getElementById('s-avg').textContent=avg.average_group_size?avg.average_group_size.toFixed(1):'0';
+  document.getElementById('s-sites').textContent=sites.filter(x=>x.is_active).length;
+  if(bps.length){new Chart(document.getElementById('chart-bps'),{type:'bar',data:{labels:bps.map(r=>r.heritage_site__name),datasets:[{data:bps.map(r=>r.total),backgroundColor:'#1F3864',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}})}else{document.getElementById('bps-empty').classList.remove('d-none');document.getElementById('chart-bps').style.display='none';}
+  if(mo.length){new Chart(document.getElementById('chart-mt'),{type:'line',data:{labels:mo.map(r=>r.month),datasets:[{data:mo.map(r=>r.total_bookings),borderColor:'#007A4D',backgroundColor:'rgba(0,122,77,.1)',tension:0.4,fill:true}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}})}else{document.getElementById('mt-empty').classList.remove('d-none');document.getElementById('chart-mt').style.display='none';}
+  document.getElementById('tbl').innerHTML=sites.map(s=>`<tr><td class='fw-semibold'>${s.name}</td><td><span class='badge' style='background:#007A4D'>${s.province__name}</span></td><td>${s.entry_fee!=null?'R'+parseFloat(s.entry_fee).toFixed(0):'<span class="text-success">Free</span>'}</td><td>${s.is_active?'<span class="badge bg-success">Active</span>':'<span class="badge bg-secondary">Inactive</span>'}</td></tr>`).join('');
+} load();
+</script>{% endblock %}
