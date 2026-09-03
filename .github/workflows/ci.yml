@@ -64,7 +64,7 @@ jobs:
 
       - name: Run migrations
         working-directory: backend
-        run: docker compose exec web python manage.py migrate #python manage.py migrate
+        run: python manage.py migrate
 
       - name: Verify installed packages
         working-directory: backend
@@ -72,4 +72,4 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        run: docker compose exec web pytest -v #python -m pytest -v
+        run: python -m pytest -v
