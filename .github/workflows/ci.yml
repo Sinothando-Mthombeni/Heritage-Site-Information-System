@@ -66,6 +66,10 @@ jobs:
         working-directory: backend
         run: python manage.py migrate
 
+      - name: Verify installed packages
+        working-directory: backend
+        run: pip show django-cors-headers django-ratelimit sentry-sdk
+
       - name: Run tests
         working-directory: backend
         run: python -m pytest -v
