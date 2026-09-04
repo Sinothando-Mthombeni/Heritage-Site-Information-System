@@ -61,7 +61,11 @@ jobs:
       - name: Run system check
         working-directory: backend
         run: python manage.py check
-
+      
+      - name: Verify Django configuration
+        working-directory: backend
+        run: python manage.py check
+        
       - name: Run migrations
         working-directory: backend
         run: python manage.py migrate
