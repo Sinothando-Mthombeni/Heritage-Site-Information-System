@@ -65,14 +65,18 @@ jobs:
       - name: Verify Django configuration
         working-directory: backend
         run: python manage.py check
-        
-      - name: Run migrations
-        working-directory: backend
-        run: python manage.py migrate
 
       - name: Verify installed packages
         working-directory: backend
         run: pip show django-cors-headers django-ratelimit sentry-sdk
+
+      - name: Run migrations
+        working-directory: backend
+        run: python manage.py migrate
+      
+      - name: Collect static files
+        working-directory: backend
+        run: python manage.py collectstatic --noinput
 
       - name: Run tests
         working-directory: backend
