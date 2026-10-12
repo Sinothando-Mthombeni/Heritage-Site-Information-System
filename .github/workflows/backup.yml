@@ -1,3 +1,4 @@
+
 name: HeritageSA Database Backup
 
 on:
@@ -64,12 +65,21 @@ jobs:
           echo "Backup archive is non-empty and its table entries are readable."
           echo "SHA-256 checksum file created."
 
-      - name: Install AWS CLI for Cloudflare R2
+      - name: Install AWS CLI v2
         shell: bash
         run: |
           set -euo pipefail
+
           sudo apt-get update
-          sudo apt-get install -y awscli
+          sudo apt-get install -y curl unzip
+
+          curl -fsSL \
+            https://awscli.amazonaws.com/v2/install.sh \
+            -o "$RUNNER_TEMP/aws-install.sh"
+
+          sudo bash "$RUNNER_TEMP/aws-install.sh" --system
+
+          aws --version
 
       - name: Upload backup to private R2 bucket
         env:
@@ -77,7 +87,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_BUCKET: heritagesa-backups
         shell: bash
         run: |
           set -euo pipefail
@@ -88,6 +97,7 @@ jobs:
           fi
 
           R2_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          R2_BUCKET="heritagesa-backups"
           BACKUP_FILE="$RUNNER_TEMP/heritagesa-backups/$BACKUP_NAME"
           BACKUP_KEY="daily/$BACKUP_NAME"
 
