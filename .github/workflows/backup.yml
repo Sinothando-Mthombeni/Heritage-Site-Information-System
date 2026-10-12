@@ -1,0 +1,118 @@
+name: HeritageSA Database Backup
+
+on:
+  schedule:
+    # Every day at 01:17 UTC (03:17 South African time)
+    - cron: "17 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: heritagesa-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Back up Neon PostgreSQL to Cloudflare R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Prepare backup filename
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "BACKUP_NAME=heritage_db_$(date -u +%Y%m%dT%H%M%SZ).dump" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/heritagesa-backups"
+
+      - name: Create PostgreSQL backup
+        env:
+          DATABASE_URL: ${{ secrets.NEON_BACKUP_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${DATABASE_URL:-}" ]]; then
+            echo "NEON_BACKUP_DATABASE_URL is missing."
+            exit 1
+          fi
+
+          docker run --rm \
+            --env DATABASE_URL \
+            --env BACKUP_NAME \
+            --volume "$RUNNER_TEMP/heritagesa-backups:/backup" \
+            postgres:18 \
+            sh -ec 'pg_dump "$DATABASE_URL" --format=custom --no-owner --no-privileges --file="/backup/$BACKUP_NAME"'
+
+      - name: Validate backup and calculate checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BACKUP_FILE="$RUNNER_TEMP/heritagesa-backups/$BACKUP_NAME"
+
+          docker run --rm \
+            --env BACKUP_NAME \
+            --volume "$RUNNER_TEMP/heritagesa-backups:/backup" \
+            postgres:18 \
+            sh -ec 'test -s "/backup/$BACKUP_NAME"; pg_restore --list "/backup/$BACKUP_NAME" > /tmp/restore-list.txt; grep -q "TABLE " /tmp/restore-list.txt'
+
+          sha256sum "$BACKUP_FILE" > "$BACKUP_FILE.sha256"
+
+          echo "Backup archive is non-empty and its table entries are readable."
+          echo "SHA-256 checksum file created."
+
+      - name: Install AWS CLI for Cloudflare R2
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Upload backup to private R2 bucket
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: heritagesa-backups
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${AWS_ACCESS_KEY_ID:-}" || -z "${AWS_SECRET_ACCESS_KEY:-}" || -z "${R2_ACCOUNT_ID:-}" ]]; then
+            echo "One or more R2 credentials are missing."
+            exit 1
+          fi
+
+          R2_ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          BACKUP_FILE="$RUNNER_TEMP/heritagesa-backups/$BACKUP_NAME"
+          BACKUP_KEY="daily/$BACKUP_NAME"
+
+          aws --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "$BACKUP_FILE" \
+            "s3://$R2_BUCKET/$BACKUP_KEY" \
+            --only-show-errors
+
+          aws --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "$BACKUP_FILE.sha256" \
+            "s3://$R2_BUCKET/$BACKUP_KEY.sha256" \
+            --only-show-errors
+
+          LOCAL_SIZE=$(wc -c < "$BACKUP_FILE" | tr -d '[:space:]')
+          REMOTE_SIZE=$(aws --endpoint-url "$R2_ENDPOINT" s3api head-object \
+            --bucket "$R2_BUCKET" \
+            --key "$BACKUP_KEY" \
+            --query 'ContentLength' \
+            --output text)
+
+          if [[ "$LOCAL_SIZE" != "$REMOTE_SIZE" ]]; then
+            echo "Uploaded object size does not match the local backup."
+            exit 1
+          fi
+
+          echo "Backup uploaded and remote size verified."
+          echo "Object: s3://$R2_BUCKET/$BACKUP_KEY"
+          echo "Bytes: $REMOTE_SIZE"
