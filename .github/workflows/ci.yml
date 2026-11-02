@@ -10,7 +10,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: heritage_db
+          POSTGRES_DB: heritage_phase2_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
@@ -24,7 +24,7 @@ jobs:
       mongo:
         image: mongo:6
         ports:
-          - 27017:27017
+          - 27018:27017
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
           --health-interval 10s
@@ -32,16 +32,14 @@ jobs:
           --health-retries 5
 
     env:
-      DJANGO_SETTINGS_MODULE: settings
-      SECRET_KEY: ci-test-secret-key-not-used-in-production
-      DEBUG: "True"
-      DB_NAME: heritage_db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOST: localhost
-      DB_PORT: 5432
-      MONGO_URI: mongodb://localhost:27017/
-      MONGO_DB_NAME: heritage_phase3
+      DJANGO_SETTINGS_MODULE: test_settings
+      HERITAGE_TEST_DB_NAME: heritage_phase2_test
+      HERITAGE_TEST_DB_USER: postgres
+      HERITAGE_TEST_DB_PASSWORD: postgres
+      HERITAGE_TEST_DB_HOST: 127.0.0.1
+      HERITAGE_TEST_DB_PORT: 5432
+      HERITAGE_TEST_MONGO_URI: mongodb://127.0.0.1:27018/
+      HERITAGE_TEST_MONGO_DB_NAME: heritage_phase2_test
 
     steps:
       - name: Checkout repository
@@ -62,10 +60,6 @@ jobs:
         working-directory: backend
         run: python manage.py check
       
-      - name: Verify Django configuration
-        working-directory: backend
-        run: python manage.py check
-
       - name: Verify installed packages
         working-directory: backend
         run: pip show django-cors-headers django-ratelimit sentry-sdk

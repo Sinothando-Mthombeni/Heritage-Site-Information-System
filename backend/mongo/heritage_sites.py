@@ -1,25 +1,37 @@
-from .client import db
+from .client import active_collection
 
-heritage_sites_collection = db.heritage_sites
 
-def get_all_sites():
+def get_all_sites(page=1, page_size=10, collection=None):
+    collection = (
+        collection if collection is not None else active_collection("heritage_sites")
+    )
+    offset = (page - 1) * page_size
     return list(
-        heritage_sites_collection.find(
-            {},
+        collection.find(
+            {"is_active": True},
             {"_id": 0}
-        )
+        ).sort("site_id", 1).skip(offset).limit(page_size)
     )
 
-def get_sites_by_province(province):
+
+def get_sites_by_province(province, collection=None):
+    collection = (
+        collection if collection is not None else active_collection("heritage_sites")
+    )
     return list(
-        heritage_sites_collection.find(
-            {"province": province},
+        collection.find(
+            {"province": province, "is_active": True},
             {"_id": 0}
-        )
+        ).sort("site_id", 1)
     )
 
-def get_site_by_name(name):
-    return heritage_sites_collection.find_one(
-        {"name": name},
-        {"_id": 0}
+
+def get_site_by_name(name, collection=None):
+    collection = (
+        collection if collection is not None else active_collection("heritage_sites")
     )
+    documents = collection.find(
+        {"name": name, "is_active": True},
+        {"_id": 0},
+    ).sort("site_id", 1).limit(1)
+    return next(iter(documents), None)

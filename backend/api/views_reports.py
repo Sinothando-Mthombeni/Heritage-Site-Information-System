@@ -9,7 +9,9 @@ service function and handles serialisation edge cases:
 """
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 import random
+from api.decorators import api_error_handler
 from heritage_backend.core.models import HeritageSite
 
 
@@ -21,14 +23,18 @@ from heritage_backend.services.reporting_service import (
 )
 
 
+@api_error_handler
+@require_GET
 def bookings_per_site_view(request):
     """GET /api/reports/bookings-per-site/
-    Returns a list of {heritage_site__name, total} ordered by most bookings.
+    Returns bookings grouped by stable site ID, ordered by most bookings.
     """
     data = list(bookings_per_site())
     return JsonResponse(data, safe=False, encoder=DjangoJSONEncoder)
 
 
+@api_error_handler
+@require_GET
 def average_group_size_view(request):
     """GET /api/reports/average-group-size/
     Returns {"average_group_size": <float>} across all bookings.
@@ -41,6 +47,8 @@ def average_group_size_view(request):
     return JsonResponse({"average_group_size": value})
 
 
+@api_error_handler
+@require_GET
 def monthly_booking_stats_view(request):
     """GET /api/reports/monthly-stats/
     Returns a list of {month, total_bookings} per calendar month.
@@ -55,28 +63,36 @@ def monthly_booking_stats_view(request):
     return JsonResponse(data, safe=False)
 
 
+@api_error_handler
+@require_GET
 def sites_with_provinces_view(request):
     """GET /api/reports/sites/
     Returns all active heritage sites with their province name.
     Uses DjangoJSONEncoder to handle Decimal entry_fee values.
     """
-    qs = sites_with_provinces().values(
+    qs = sites_with_provinces().filter(is_active=True).values(
         "site_id", "name", "province__name", "entry_fee", "is_active"
     )
     return JsonResponse(list(qs), safe=False, encoder=DjangoJSONEncoder)
 
 # ── Phase 1: public-safe aggregations ────────────────────────────────────
 
+@api_error_handler
+@require_GET
 def sites_by_province_count(request):
     from django.db.models import Count
     data = list(HeritageSite.objects.filter(is_active=True).values('province__name').annotate(count=Count('site_id')).order_by('province__name'))
     return JsonResponse(data, safe=False)
 
+@api_error_handler
+@require_GET
 def sites_by_category_count(request):
     from django.db.models import Count
     data = list(HeritageSite.objects.filter(is_active=True).values('category__name').annotate(count=Count('site_id')).order_by('category__name'))
     return JsonResponse(data, safe=False)
 
+@api_error_handler
+@require_GET
 def featured_sites_view(request):
     all_ids = list(HeritageSite.objects.filter(is_active=True).values_list('site_id',flat=True))
     selected = random.sample(all_ids, min(3, len(all_ids)))
@@ -84,6 +100,8 @@ def featured_sites_view(request):
     return JsonResponse([{'site_id':s.site_id,'name':s.name,'description':s.description,'province':s.province.name,'category':s.category.name,'entry_fee':float(s.entry_fee) if s.entry_fee else None} for s in sites], safe=False)
 
 # ── Phase 2: completeness additions ──────────────────────────────────────
+@api_error_handler
+@require_GET
 def site_detail_view(request, site_id):
     try:
         s = HeritageSite.objects.select_related('province','category').get(pk=site_id, is_active=True)
@@ -91,18 +109,46 @@ def site_detail_view(request, site_id):
     except HeritageSite.DoesNotExist:
         return JsonResponse({'status':'error','message':'Site not found'},status=404)
 
+def _spreadsheet_safe_cell(value):
+    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
+        return "'" + value
+    return value
+
+
+@api_error_handler
+@require_GET
 def export_bookings_csv(request):
     import csv
     from django.http import StreamingHttpResponse
     from heritage_backend.core.models import Booking
+
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return JsonResponse(
+            {"status": "error", "message": "Staff access is required."},
+            status=403,
+        )
+
     def rows():
         yield ['booking_id','visitor_name','visitor_email','site_name','visit_date','number_of_people','booking_date','is_cancelled']
-        for bk in Booking.objects.select_related('visitor','heritage_site').all():
-            yield [bk.booking_id,bk.visitor.full_name,bk.visitor.email,bk.heritage_site.name,bk.visit_date,bk.number_of_people,bk.booking_date,bk.is_cancelled]
+        bookings = Booking.objects.select_related(
+            'visitor', 'heritage_site'
+        ).all().iterator(chunk_size=2000)
+        for bk in bookings:
+            yield [
+                bk.booking_id,
+                _spreadsheet_safe_cell(bk.visitor.full_name),
+                _spreadsheet_safe_cell(bk.visitor.email),
+                _spreadsheet_safe_cell(bk.heritage_site.name),
+                bk.visit_date,
+                bk.number_of_people,
+                bk.booking_date,
+                bk.is_cancelled,
+            ]
+
     class Echo:
         def write(self, v): return v
+
     w = csv.writer(Echo())
     resp = StreamingHttpResponse((w.writerow(r) for r in rows()), content_type='text/csv')
     resp['Content-Disposition'] = 'attachment; filename=bookings.csv'
     return resp
-

@@ -1,4 +1,4 @@
-from django.db.models import Count, Avg
+from django.db.models import Avg, Count
 from django.db import connection
 from heritage_backend.core.models import HeritageSite, Booking
 
@@ -6,18 +6,24 @@ def list_active_sites():
     return HeritageSite.objects.filter(is_active=True)
 
 def sites_with_provinces():
-    return HeritageSite.objects.select_related("province").all()
+    return HeritageSite.objects.filter(is_active=True).select_related("province")
 
 def bookings_per_site():
     return (
-        Booking.objects
-        .values("heritage_site__name")
+        Booking.objects.filter(is_cancelled=False)
+        .values(
+            "heritage_site_id",
+            "heritage_site__name",
+            "heritage_site__province__name",
+        )
         .annotate(total=Count("booking_id"))
-        .order_by("-total")
+        .order_by("-total", "heritage_site_id")
     )
 
 def average_group_size():
-    return Booking.objects.aggregate(avg_people=Avg("number_of_people"))
+    return Booking.objects.filter(is_cancelled=False).aggregate(
+        avg_people=Avg("number_of_people")
+    )
 
 def monthly_booking_stats():
     with connection.cursor() as cursor:
@@ -26,6 +32,7 @@ def monthly_booking_stats():
                 DATE_TRUNC('month', booking_date) AS month,
                 COUNT(*) AS total_bookings
             FROM booking
+            WHERE is_cancelled = FALSE
             GROUP BY month
             ORDER BY month;
         """)

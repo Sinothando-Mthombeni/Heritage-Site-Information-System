@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent
 _env = BASE_DIR / '.env'
@@ -20,8 +21,24 @@ try:
 except ImportError:
     pass  # sentry-sdk not installed — monitoring disabled
 
-SECRET_KEY = os.getenv('SECRET_KEY','insecure-dev-key')
 DEBUG = os.getenv("DEBUG", "False") == "True"
+
+
+def _resolve_secret_key(secret_key, debug):
+    development_keys = {
+        "insecure-dev-key",
+        "replace-with-a-long-random-string-at-least-50-chars",
+    }
+    if not secret_key or not secret_key.strip():
+        if debug:
+            return "insecure-dev-key"
+        raise ImproperlyConfigured("SECRET_KEY must be configured when DEBUG is disabled.")
+    if not debug and secret_key in development_keys:
+        raise ImproperlyConfigured("The development SECRET_KEY cannot be used when DEBUG is disabled.")
+    return secret_key
+
+
+SECRET_KEY = _resolve_secret_key(os.getenv("SECRET_KEY"), DEBUG)
 
 ALLOWED_HOSTS = [
     h.strip()

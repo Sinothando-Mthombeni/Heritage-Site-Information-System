@@ -3,7 +3,7 @@
 **HeritageSA** is a full-stack web application for discovering, exploring, and booking visits to South African cultural and natural heritage sites. Built as a portfolio project demonstrating professional-grade Django development, polyglot persistence, REST API design, ETL pipeline engineering, containerised deployment, and CI/CD.
 
 [![CI](https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Sinothando-Mthombeni/Heritage-Site-Information-System/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-55%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Django](https://img.shields.io/badge/django-4.2-green)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-15-336791)
@@ -120,7 +120,7 @@ Django Application (Gunicorn in production)
 - Soft-delete sites (is_active flag) without losing booking history
 
 ### API
-- 13 REST endpoints across booking, reporting, and MongoDB analytics layers
+- 16 API routes across booking, reporting, site detail, and MongoDB analytics
 - DRF serializer validation on booking creation with per-field error messages
 - Rate limiting: 10 POST requests per minute per IP on the booking endpoint
 - CORS configured for cross-origin frontend access
@@ -153,7 +153,7 @@ Category ──────────┤
 | `entry_fee` nullable (not zero) | NULL means explicitly free; zero would be ambiguous |
 | Province and Category as lookup tables | Prevents typo fragmentation in reporting queries |
 | Visitor identified by email via `get_or_create` | Repeat visitors accumulate history without requiring an account |
-| `is_cancelled` + `cancelled_at` (soft cancel) | Historical booking records are preserved for reporting |
+| `is_cancelled` + `cancelled_at` (soft cancel) | Historical booking records are preserved; cancelled rows are excluded from booking reports |
 
 ---
 
@@ -171,29 +171,33 @@ Category ──────────┤
 | Method | Path | Description |
 |---|---|---|
 | POST | `/api/bookings/create/` | Create a booking — DRF validated, rate limited 10/min per IP |
-| PATCH | `/api/bookings/<id>/cancel/` | Cancel a booking (soft cancel) |
+| PATCH | `/api/bookings/<id>/cancel/` | Temporarily unavailable (503) until Phase 3 ownership controls exist |
 
 ### Reporting API (PostgreSQL-backed)
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/reports/bookings-per-site/` | Booking count per site |
-| GET | `/api/reports/average-group-size/` | Average number of people per booking |
-| GET | `/api/reports/monthly-stats/` | Booking totals by calendar month |
+| GET | `/api/reports/bookings-per-site/` | Booking count per site ID; cancelled bookings excluded |
+| GET | `/api/reports/average-group-size/` | Average number of people per non-cancelled booking |
+| GET | `/api/reports/monthly-stats/` | Non-cancelled booking totals by `booking_date` calendar month |
 | GET | `/api/reports/sites/` | All active sites with province names |
 | GET | `/api/reports/province-counts/` | Site count per province (no booking data) |
 | GET | `/api/reports/category-counts/` | Site count per category (no booking data) |
 | GET | `/api/reports/featured/` | 3 randomly selected active sites |
-| GET | `/api/reports/export/bookings/` | Download all bookings as CSV |
+| GET | `/api/reports/export/bookings/` | Staff-only CSV export; formula-leading text is neutralized |
 | GET | `/api/sites/<site_id>/` | Full site detail by ID |
 
 ### MongoDB analytical API
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/mongo/sites/` | All sites from MongoDB (paginated: `?page=1&page_size=10`) |
-| GET | `/api/mongo/sites/province/<name>/` | Sites filtered by province name |
-| GET | `/api/mongo/sites/<name>/` | Single site document by name |
-| GET | `/api/mongo/analytics/average-fee/` | Average entry fee across all sites |
-| GET | `/api/mongo/analytics/sites-per-province/` | Site count grouped by province |
+| GET | `/api/mongo/sites/` | Active sites, ordered by ID; `page` (default 1) and `page_size` (default 10, max 100) |
+| GET | `/api/mongo/sites/province/<name>/` | Active sites filtered by province name |
+| GET | `/api/mongo/sites/<name>/` | Active site document by name; missing site returns 404 |
+| GET | `/api/mongo/analytics/average-fee/` | Average fee across active sites |
+| GET | `/api/mongo/analytics/sites-per-province/` | Active-site count grouped by province |
+
+All reporting and Mongo read routes accept `GET` only and return 405 for other methods. Mongo pagination retains the existing JSON-array response; invalid or out-of-range pagination values return 400. PostgreSQL remains authoritative for booking records. Booking totals and group-size averages exclude cancelled bookings in both stores, and monthly reports group by the booking creation date (`booking_date`), not the planned visit date (`visit_date`).
+
+The CSV endpoint returns 403 to anonymous and non-staff callers. Cancellation is disabled with 503 until server-verified booking ownership is implemented in Phase 3. No caller-supplied visitor email or booking ID is treated as proof of ownership.
 
 ### Booking request body
 ```json
@@ -262,6 +266,8 @@ docker compose exec web python manage.py load_seed --enriched
 docker compose exec web python manage.py run_etl
 ```
 
+MongoDB is a derived reporting projection, not a transactional write target. Refresh it manually with `manage.py run_etl` after PostgreSQL data changes when current Mongo-backed catalogue and analytics are needed. A refresh stages a new generation and publishes it only after loading and indexing both collections succeeds; Mongo-backed reads otherwise reflect the last successfully published refresh. PostgreSQL records remain authoritative.
+
 ### 7. Create an admin user
 ```bash
 docker compose exec web python manage.py createsuperuser
@@ -300,27 +306,36 @@ docker compose exec web python manage.py createsuperuser
 ## Running Tests
 
 ```bash
-# Run the full test suite (55 tests)
-docker compose exec web python -m pytest -v
+# From the backend directory, start disposable test-only services
+docker compose -f docker-compose.test.yml up -d
 
-# Run a specific test file
-docker compose exec web python -m pytest heritage_backend/tests/test_api.py -v
+# From the backend directory, with project dependencies installed:
+python -m pytest -v
+
+# Stop the disposable test services when finished
+docker compose -f docker-compose.test.yml down
+
+# Run a specific test file from the backend directory
+python -m pytest heritage_backend/tests/test_api.py -v
 
 # Run a specific test class
-docker compose exec web python -m pytest heritage_backend/tests/test_mongo.py::TestAverageEntryFee -v
+python -m pytest heritage_backend/tests/test_mongo.py::TestAverageEntryFee -v
 ```
 
 ### Test suite breakdown
 
 | File | Tests | What is covered |
 |---|---|---|
-| `test_transactions.py` | 3 | Booking creation, rollback on invalid site, repeat visitor identity |
+| `test_transactions.py` | 2 | Booking creation, rollback on invalid site, repeat visitor identity |
 | `test_reporting.py` | 1 | Reporting service executes without error |
-| `test_api.py` | 32 | Booking endpoint (positive + all negative paths), CORS headers, public page access, province/category/featured endpoints, reporting endpoints, model `__str__`, DB indexes |
-| `test_mongo.py` | 19 | `average_entry_fee` (4), `sites_per_province` (4), Mongo API endpoints (7), analytics API endpoints (4) |
+| `test_api.py` | 33 | Booking endpoint, CORS headers, public page access, province/category/featured endpoints, reporting endpoints, model `__str__`, DB indexes |
+| `test_mongo.py` | 40 | Mongo site pagination and visibility, analytics, HTTP methods, booking aggregation semantics |
+| `test_phase2_remediation.py` | 25 | Export permissions/CSV safety, cancellation containment, PostgreSQL/Mongo report parity, isolated test settings and safe errors |
+| `test_etl.py` | 3 | Isolated Mongo ETL publication, index preservation, source and ambiguous-publication failure behavior |
 
 **Test design decisions:**
-- MongoDB tests use `mongomock` — no live MongoDB instance required in test runs
+- pytest uses `test_settings.py`, a dedicated `heritage_phase2_test` database, and local-only service addresses; inherited database URLs are rejected
+- MongoDB unit tests use `mongomock`; ETL integration tests use the disposable MongoDB service on port 27018
 - Rate limiting is disabled in tests via an autouse fixture (`settings.RATELIMIT_ENABLE = False`) — production rate limiting remains fully active
 - CI uses disposable PostgreSQL 15 and MongoDB 6 service containers, never the production database
 
@@ -336,8 +351,10 @@ Heritage-Site-Information-System/
 └── backend/
     ├── Dockerfile
     ├── docker-compose.yml             # web + postgres + mongo
+    ├── docker-compose.test.yml        # disposable API test services (ports 55432/27018)
     ├── entrypoint.sh                  # migrate → collectstatic → gunicorn/runserver
     ├── settings.py                    # Django settings (reads from .env)
+    ├── test_settings.py               # local-only, dedicated database test settings
     ├── manage.py
     ├── requirements.txt               # Production dependencies
     ├── requirements-dev.txt           # pytest, pytest-django, mongomock
@@ -345,6 +362,7 @@ Heritage-Site-Information-System/
     ├── .env.example                   # Environment variable template
     │
     ├── api/
+    │   ├── decorators.py              # sanitized API data-service errors
     │   ├── serializers.py             # BookingSerializer (DRF)
     │   ├── views_pg.py                # Booking + cancel endpoints
     │   ├── views_mongo.py             # MongoDB read endpoints
@@ -386,7 +404,9 @@ Heritage-Site-Information-System/
     │       ├── test_transactions.py
     │       ├── test_reporting.py
     │       ├── test_api.py
-    │       └── test_mongo.py
+    │       ├── test_mongo.py
+    │       ├── test_phase2_remediation.py
+    │       └── test_etl.py
     │
     ├── mongo/
     │   ├── client.py                  # MongoClient connection
@@ -408,7 +428,7 @@ GitHub Actions CI          Render (application host)
     │                              │
     ├── Disposable PostgreSQL      ├── Django / Gunicorn
     ├── Disposable MongoDB         │
-    └── pytest (55 tests)          ├── External PostgreSQL (source of truth)
+    └── pytest (104 tests)         ├── External PostgreSQL (source of truth)
                                    │
                                    └── MongoDB Atlas M0 (analytics)
 ```
@@ -423,19 +443,12 @@ docker compose logs web -f       # Follow application logs
 docker compose exec web python manage.py check  # Verify configuration
 ```
 
-### Applying migrations to a hosted database
+### Applying migrations to an explicitly approved database
+
+These commands write to the configured database. They are not part of local testing or Phase 2 verification; do not point them at production without separate approval. Provide credentials and a non-development `SECRET_KEY` through the approved secure environment, not this example or shell history.
 
 ```powershell
-# Set environment variables to point at the hosted database
-$env:DB_HOST = "your-db-host.example.com"
-$env:DB_NAME = "heritage_db"
-$env:DB_USER = "heritage_user"
-$env:DB_PASSWORD = "your-password"
-$env:DB_PORT = "5432"
-$env:SECRET_KEY = "any-value"
-$env:DEBUG = "False"
-
-# Run management commands locally against the hosted database
+# Set database values only for the explicitly approved target environment.
 python manage.py migrate
 python manage.py load_seed
 python manage.py run_etl
@@ -452,16 +465,16 @@ python manage.py createsuperuser
 |---|---|---|
 | Foundation | Django setup, models, migrations, Docker, CI | ✅ Done |
 | Data | 29 real SA heritage sites, Wikidata enrichment, seed commands | ✅ Done |
-| API | Booking, cancellation, reporting, MongoDB analytics endpoints | ✅ Done |
+| API | Booking creation, reporting, MongoDB analytics endpoints | ✅ Done |
 | Frontend | Home page, discover page, admin dashboard, booking modal | ✅ Done |
 | Phase 1 | CORS, rate limiting, Sentry, `__str__`, DB indexes, logging, UX cleanup | ✅ Done |
+| Phase 2 | API completeness and security containment | ✅ Remediated; cancellation remains safely disabled pending Phase 3 |
 | Infrastructure | External PostgreSQL + portable backups + restore drill | 🔄 In progress |
 
 ### Planned
 
 | Phase | Description | Effort |
 |---|---|---|
-| Phase 2 | MongoDB pagination, site detail page, CSV export completion | 3–4 days |
 | Phase 3 | Authentication — register/login/account, user tiering (anonymous / member / admin) | 5–6 days |
 | Phase 4 | API documentation — Swagger UI via drf-spectacular | 0.5 days |
 | Phase 5 | Redis caching, PostgreSQL full-text search, Celery scheduled ETL | 3–4 days |
@@ -482,7 +495,7 @@ This is a portfolio project intentionally designed to demonstrate engineering br
 | **Service layer pattern** | Business logic in `services/` files, not in views or models — directly testable without HTTP |
 | **REST API design** | POST for writes, correct HTTP status codes (201/400/401/405), per-field DRF error messages |
 | **Input validation** | DRF BookingSerializer with field-level validators and a custom `validate_visit_date` |
-| **Test engineering** | 55 tests across unit, integration, and API layers — including mongomock for offline MongoDB testing |
+| **Test engineering** | 104 tests across unit, integration, and API layers — including mongomock and isolated live MongoDB ETL tests |
 | **Test isolation** | Rate limiting disabled via autouse fixture, not by weakening production configuration |
 | **CI/CD** | GitHub Actions pipeline with PostgreSQL and MongoDB service containers, matching the production stack |
 | **Docker** | Multi-service Compose stack, `.dockerignore`, gunicorn/runserver switching in entrypoint |

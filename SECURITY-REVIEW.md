@@ -64,3 +64,18 @@
 - No live production request, database query, booking mutation, spreadsheet execution, or denial-of-service test was performed.
 - The local full test run was blocked before database-backed assertions by PostgreSQL authentication failure. Eight isolated Mongo aggregation unit tests passed; they do not exercise these access-control findings.
 - Actual deployment exposure, proxy rules, logs, and runtime secrets were not verified.
+
+## Phase 2 remediation status
+
+The findings above describe the source at the reviewed baseline commit. Remediation was performed on `main` starting at `2a33901f09809a3df5e4b7639202f8ad8eec1d37`; the changes remain uncommitted in the current working tree.
+
+| ID | Current status | Verification / disposition |
+|---|---|---|
+| SEC-01 | Fixed and verified | Export checks authenticated staff status before data access. Anonymous and non-staff callers receive 403; the allowed CSV contract is regression-tested. |
+| SEC-02 | Fixed and verified by temporary containment | Cancellation returns 503 without accessing the booking service; non-PATCH methods return 405. Permanent owner verification remains deferred to Phase 3. |
+| SEC-03 | Fixed and verified | Formula-leading visitor name, email, and site values are neutralized; CSV header order and file name remain unchanged. |
+| SEC-04 | Fixed and verified in source | Production settings reject missing, blank, built-in development, and documented template secret-key values without printing them. Deployed settings were not accessed. |
+
+During the authorized legacy ETL review, the tracked `backend/etl.py` contained a literal-looking database password under the variable `password`. The script was unreferenced elsewhere in the repository and has been removed from the current tree. The literal's validity and remote/public exposure are uncertain; its prior source remains in Git history. No credential was rotated and no history rewrite or deployment-secret change was attempted. This potential historical credential is **Outstanding, with explanation**, and requires owner follow-up under separate authorization.
+
+The complete test and API disposition details are in [docs/audits/PHASE_2_REMEDIATION_REPORT.md](./docs/audits/PHASE_2_REMEDIATION_REPORT.md).
